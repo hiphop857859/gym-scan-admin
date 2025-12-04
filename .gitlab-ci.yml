@@ -1,0 +1,52 @@
+variables:
+  HARBOR_REGISTRY: $DOCKER_URL/$DOCKER_PROJECT/$DOCKER_REPO
+
+stages:
+  - build
+  - deploy
+
+build to registry:
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ''
+  stage: build
+  environment:
+    name: development
+  image: docker:27.3.0
+  services:
+    - docker:27.3.0-dind
+  before_script:
+    # - apk add --no-cache aws-cli
+    - echo "$DOCKER_PASSWORD" | docker login $DOCKER_URL -u robot\$"$DOCKER_USERNAME" --password-stdin
+
+  script:
+    - cp $ENV .env
+    - docker build -t $HARBOR_REGISTRY:$CI_COMMIT_BRANCH -t $HARBOR_REGISTRY:$CI_COMMIT_SHORT_SHA .
+    - docker push $HARBOR_REGISTRY:$CI_COMMIT_BRANCH && docker push $HARBOR_REGISTRY:$CI_COMMIT_SHORT_SHA
+  only:
+    - dev
+  tags:
+    - azure
+
+deploy staging:
+  stage: deploy
+  # environment:
+  #   name: development
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan git.volcanly.me >> ~/.ssh/known_hosts
+    - echo "StrictHostKeyChecking no" >> ~/.ssh/config
+    - chmod 644 ~/.ssh/known_hosts
+
+  script:
+    - scp $ENV $SERVER_USER@$SERVER_IP:/$SERVER_PROJECT_DIR/.env
+    - ssh $SERVER_USER@$SERVER_IP "cd $SERVER_PROJECT_DIR && bash up.sh"
+  only:
+    - dev
+  tags:
+    - azure

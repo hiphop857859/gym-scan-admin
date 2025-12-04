@@ -1,0 +1,54 @@
+.noActionText {
+  color: #8c8c8c;
+  font-style: italic;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  height: 36px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.addButton {
+  composes: button;
+  background: transparent !important;
+  border: 1px solid #1668dc !important;
+  color: white;
+}
+
+.addButton:hover {
+  color: #1668dc !important;
+}
+
+.removeButton {
+  composes: button;
+  background: transparent !important;
+  border: 1px solid #ff4d4f;
+  color: white;
+}
+
+.removeButton:hover {
+  background: linear-gradient(135deg, #ff7875 0%, #ffa39e 100%);
+}

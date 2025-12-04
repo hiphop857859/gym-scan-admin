@@ -1,0 +1,18 @@
+.ant-picker {
+  min-height: 42px;
+}
+
+.ant-select-selector,
+.ant-select-selection-wrap {
+  height: 42px !important;
+  min-height: 42px !important;
+}
+
+.ant-select-selection-overflow {
+  height: 38px;
+  overflow: auto;
+}
+
+.ant-select-selection-placeholder {
+  font-weight: 300;
+}
