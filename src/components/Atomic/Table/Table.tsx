@@ -30,6 +30,7 @@ export type Props = {
   rowSelection?: object
   component?: object | undefined
   rowKey?: string | GetRowKey<any> | undefined
+  emptyText?: string
 }
 
 const Table = ({
@@ -46,7 +47,8 @@ const Table = ({
   title,
   border = true,
   component = {},
-  rowKey
+  rowKey,
+  emptyText = 'No data'
 }: Props) => {
   return (
     <>
@@ -57,7 +59,7 @@ const Table = ({
         id={id}
         rowKey={rowKey}
         style={style}
-        locale={{ emptyText: 'No data' }}
+        locale={{ emptyText: emptyText }}
         columns={columns}
         dataSource={dataSource}
         onRow={onRow}

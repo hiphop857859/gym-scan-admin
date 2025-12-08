@@ -121,6 +121,7 @@ const RecipePage = () => {
                 handleOpenModalDetail,
                 handleOpenModalDelete
               })}
+              emptyText='No recipes yet. Create your first recipe to feed the AI.'
             />
           </div>
         </div>

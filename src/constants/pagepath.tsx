@@ -90,7 +90,7 @@ export const COMPONENTS_PRIVATE_ADMIN_ROUTER = {
       code: 'recipe',
       path: '/recipe',
       Component: RecipePage,
-      title: 'Recipe Management',
+      title: 'Recipe Library',
       roles: [UserRole.ADMIN]
     }
   },
