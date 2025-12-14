@@ -26,6 +26,7 @@ import PartnerPage from 'src/components/Pages/ManagePage/PartnerPage'
 import { ComplimentaryIcon } from 'src/icons/ComplimentaryIcon'
 import StraffPage from 'src/components/Pages/ManagePage/StaffPage'
 import RecipePage from 'src/components/Pages/ManagePage/RecipePage'
+import MachinePage from 'src/components/Pages/ManagePage/MachinePage'
 
 export const COMPONENTS_PRIVATE_ADMIN_ROUTER = {
   // artists: {
@@ -94,6 +95,18 @@ export const COMPONENTS_PRIVATE_ADMIN_ROUTER = {
       roles: [UserRole.ADMIN]
     }
   },
+
+  machines: {
+    machine: {
+      code: 'machine',
+      path: '/machine',
+      Component: MachinePage,
+      title: 'Machine Library',
+      roles: [UserRole.ADMIN]
+    }
+  },
+
+
   // categories: {
   //   category: {
   //     code: 'category',
@@ -210,6 +223,13 @@ export const COMPONENTS_LEFT_MENU: Array<LeftMenu> = [
     path: COMPONENTS_PRIVATE_ADMIN_ROUTER.recipes.recipe.path,
     Icon: PhysicalIcon,
     roles: COMPONENTS_PRIVATE_ADMIN_ROUTER.recipes.recipe.roles
+  },
+  {
+    code: COMPONENTS_PRIVATE_ADMIN_ROUTER.machines.machine.code,
+    title: COMPONENTS_PRIVATE_ADMIN_ROUTER.machines.machine.title,
+    path: COMPONENTS_PRIVATE_ADMIN_ROUTER.machines.machine.path,
+    Icon: ComplimentaryIcon,
+    roles: COMPONENTS_PRIVATE_ADMIN_ROUTER.machines.machine.roles
   },
   // {
   //   code: COMPONENTS_PRIVATE_ADMIN_ROUTER.categories.category.code,

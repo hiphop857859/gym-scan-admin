@@ -7,6 +7,8 @@ export const normalizePath = (path: string) => {
 export const parseUrl = (url = '', data?: Params) => {
   const { params, vars } =
     (data as { vars?: { [key: string]: string }; params?: { [key: string]: string | string[] } }) || {}
+  console.log('parseUrl params', params)
+  console.log('parseUrl vars', vars)
 
   if (vars) {
     Object.keys(vars)?.forEach((i) => {

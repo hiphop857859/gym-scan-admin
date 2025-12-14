@@ -8,11 +8,16 @@ export const API = {
     return (await axiosInstance.get(parseUrl(url, data || {}), config)).data as Response
   },
 
-  POST: async <Response>(url = '', data?: Params, config?: AxiosRequestConfig<object> | undefined) => {
-    const { vars, payload } = data || {}
-    const body = data?.payload ? { ...data.payload } : undefined
-    console.log('body', body)
-    return (await axiosInstance.post(parseUrl(url, { vars }), body, config)).data as Response
+  POST: async <Response>(url = '', data?: Params, config?: AxiosRequestConfig<object>) => {
+    const vars = data?.vars ?? {}
+    const payload = data?.payload
+
+    // ✅ Nếu là FormData → gửi thẳng
+    const body = payload instanceof FormData ? payload : payload
+
+    const response = await axiosInstance.post(parseUrl(url, vars), body, config)
+
+    return response.data as Response
   },
 
   POST_FILE: async <Response>(url = '', data?: Params) => {
@@ -25,11 +30,11 @@ export const API = {
     }
     return (await axiosInstanceWithFile(true).post(parseUrl(url, { vars }), formData)).data as Response
   },
-  PUT: async <Response>(url = '', data?: Params) => {
+  PUT: async <Response>(url = '', data?: Params, config?: AxiosRequestConfig<object>) => {
     const vars = data?.vars ?? {}
     const payload = data?.payload ?? {}
 
-    const response = await axiosInstance.put(parseUrl(url, vars), payload)
+    const response = await axiosInstance.put(parseUrl(url, vars), payload, config)
 
     if (response) {
       return response.data as Response
@@ -130,5 +135,9 @@ export const API = {
 
   // Recipe API
   recipe: '/admin/recipe',
-  recipeId: '/admin/recipe/{id}'
+  recipeId: '/admin/recipe/{id}',
+
+  // Machine API
+  machine: '/admin/machine-history',
+  machineId: '/admin/machine-history/{id}'
 }

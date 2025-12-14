@@ -12,6 +12,7 @@ import { connectedAccountsService } from './connectedAccount'
 import { partnerService } from './partner'
 import { professionalDirectoryService } from './professional-directory'
 import { recipeService } from './recipe'
+import { machineService } from './machine'
 
 export const Service = {
   ...commonService,
@@ -27,5 +28,6 @@ export const Service = {
   ...carouseEventsService,
   ...partnerService,
   ...professionalDirectoryService,
-  ...recipeService
+  ...recipeService,
+  ...machineService
 }
