@@ -155,9 +155,7 @@ const ModalUpdate = ({ modalUpdateId, handleCancel, handleOk }: Props) => {
                     </Col>
                 </Row>
 
-                <Form.Item name="isGymMachine" label="Gym Machine" valuePropName="checked">
-                    <Switch />
-                </Form.Item>
+
 
                 <Form.Item name="instruction" label="Instruction">
                     <Input.TextArea rows={4} />

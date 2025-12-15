@@ -10,7 +10,6 @@ interface Props {
 }
 
 const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
-  // ✅ GET DETAIL
   const { data, loading } = useQuery({
     func: Service.getMachineDetail,
     params: modalDetailId,
@@ -35,17 +34,21 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-6">
-          {/* ✅ IMAGE */}
+          {/* IMAGE */}
           <div>
             <p className="font-semibold mb-2">Image</p>
-            <img
-              src={machine?.imageNewUrl}
-              alt="machine"
-              className="w-full h-64 object-cover rounded-xl border"
-            />
+            {machine?.imageNewUrl ? (
+              <img
+                src={machine.imageNewUrl}
+                alt="machine"
+                className="w-full h-64 object-cover rounded-xl border"
+              />
+            ) : (
+              <Tag>No image</Tag>
+            )}
           </div>
 
-          {/* ✅ VIDEO */}
+          {/* VIDEO */}
           <div>
             <p className="font-semibold mb-2">Video</p>
             {machine?.videoNewUrl ? (
@@ -59,16 +62,16 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
             )}
           </div>
 
-          {/* ✅ INFO */}
+          {/* INFO */}
           <div className="col-span-2 grid grid-cols-2 gap-4">
             <div>
               <p className="font-semibold">Machine Name</p>
-              <p>{machine?.deviceName}</p>
+              <p>{machine?.deviceName || '--'}</p>
             </div>
 
             <div>
               <p className="font-semibold">Machine Key</p>
-              <p>{machine?.machineKey}</p>
+              <p>{machine?.machineKey || '--'}</p>
             </div>
 
             <div>
@@ -89,25 +92,14 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
               </p>
             </div>
 
-            {/* ✅ MUSCLES */}
-            <div>
-              <p className="font-semibold">Primary Muscles</p>
-              {machine?.primaryMuscles?.map((m: string) => (
-                <Tag key={m}>{m}</Tag>
-              ))}
-            </div>
-
-            <div>
-              <p className="font-semibold">Secondary Muscles</p>
-              {machine?.secondaryMuscles?.map((m: string) => (
-                <Tag key={m}>{m}</Tag>
-              ))}
-            </div>
-
-            {/* ✅ INSTRUCTION */}
+            {/* INSTRUCTION */}
             <div className="col-span-2">
               <p className="font-semibold">Instruction</p>
-              <p className="whitespace-pre-line">{machine?.instruction}</p>
+              {machine?.instruction ? (
+                <p className="whitespace-pre-line">{machine.instruction}</p>
+              ) : (
+                <Tag>No instruction</Tag>
+              )}
             </div>
           </div>
         </div>
