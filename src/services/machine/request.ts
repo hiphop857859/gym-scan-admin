@@ -1,5 +1,6 @@
 import { API } from '../api.service'
 import { PageParams } from 'src/types'
+import { axiosInstanceWithFile } from '../base.service'
 
 export const machineService = {
   // GET LIST
@@ -13,12 +14,13 @@ export const machineService = {
   },
 
   // UPDATE MACHINE (support FormData)
-  updateMachine: ({ id, payload }: { id: string; payload: FormData }) => {
-    return API.PUT(`${API.machine}/${id}`, {
-      payload
-    })
+  // ✅ CREATE (FormData)
+  createMachine: ({ payload }: { payload: FormData }) => {
+    return axiosInstanceWithFile(true).post(API.machine, payload)
   },
-  createMachine: (params: { payload: FormData }) => {
-    return API.POST(API.machine, params)
+
+  // ✅ UPDATE (FormData)
+  updateMachine: ({ id, payload }: { id: string; payload: FormData }) => {
+    return axiosInstanceWithFile(true).put(`${API.machine}/${id}`, payload)
   }
 }

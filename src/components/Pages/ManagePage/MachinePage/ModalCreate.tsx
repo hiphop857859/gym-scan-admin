@@ -1,6 +1,6 @@
-import { Form, Modal, Switch, Upload, message, Button as AntButton, Input } from 'antd'
-import { useEffect, useState } from 'react'
+import { Form, Modal, Switch, Upload, message, Button, Input, Row, Col } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
+import { useEffect, useState } from 'react'
 
 import TextInput from 'src/components/Atomic/Form/TextInput'
 import { useQuery } from 'src/Hook/useQuery'
@@ -12,13 +12,13 @@ interface Props {
     handleOk: () => void
 }
 
+const IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
 const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
     const [form] = Form.useForm()
-
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [videoFile, setVideoFile] = useState<File | null>(null)
 
-    /* ================= CREATE ================= */
     const { fetch, loading } = useQuery({
         func: Service.createMachine,
         isQuery: false,
@@ -32,16 +32,12 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
         }
     })
 
-    /* ================= DEFAULT isGymMachine = true ================= */
     useEffect(() => {
         if (open) {
-            form.setFieldsValue({
-                isGymMachine: true
-            })
+            form.setFieldsValue({ isGymMachine: true })
         }
-    }, [open, form])
+    }, [open])
 
-    /* ================= SUBMIT ================= */
     const handleSubmit = (values: any) => {
         const formData = new FormData()
 
@@ -52,119 +48,112 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
         if (imageFile) formData.append('image', imageFile)
         if (videoFile) formData.append('video', videoFile)
 
-        // DEBUG
-        console.log('FORM DATA:', [...formData.entries()])
-
-        fetch({
-            payload: formData
-        })
+        fetch({ payload: formData })
     }
 
     return (
         <Modal
             open={open}
-            onCancel={handleCancel}
             title="Create Machine"
+            onCancel={handleCancel}
             footer={null}
-            width={700}
+            width={800}
             destroyOnClose
         >
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-            >
-                <Form.Item
-                    label="Machine Name"
-                    name="deviceName"
-                    rules={[{ required: true, message: 'Required' }]}
-                >
-                    <TextInput placeholder="Enter machine name" />
-                </Form.Item>
+            <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                <Row gutter={16}>
+                    <Col span={12}>
+                        <Form.Item
+                            label="Machine Name"
+                            name="deviceName"
+                            rules={[{ required: true, message: 'Required' }]}
+                        >
+                            <TextInput />
+                        </Form.Item>
+                    </Col>
 
-                <Form.Item
-                    label="Machine Key"
-                    name="machineKey"
-                    rules={[
-                        { required: true, message: 'Required' },
-                        {
-                            pattern: /^[a-z0-9_]+$/,
-                            message: 'Lowercase & underscore only (e.g. may_a1_a2)'
-                        }
-                    ]}
-                >
-                    <TextInput placeholder="e.g. may_a1_a2" />
-                </Form.Item>
+                    <Col span={12}>
+                        <Form.Item
+                            label="Machine Key"
+                            name="machineKey"
+                            rules={[
+                                { required: true },
+                                { pattern: /^[a-z0-9_]+$/, message: 'Lowercase & underscore only' }
+                            ]}
+                        >
+                            <TextInput />
+                        </Form.Item>
+                    </Col>
+                </Row>
 
-                {/* IMAGE */}
-                <Form.Item label="Image">
-                    <Upload
-                        accept="image/*"
-                        beforeUpload={(file) => {
-                            setImageFile(file)
-                            return false
-                        }}
-                        showUploadList={{
-                            showRemoveIcon: true,
-                            onRemove: () => setImageFile(null)
-                        }}
-                    >
-                        <AntButton icon={<UploadOutlined />}>
-                            Choose Image
-                        </AntButton>
-                    </Upload>
-                </Form.Item>
+                <Row gutter={16}>
+                    {/* IMAGE */}
+                    <Col span={12}>
+                        <Form.Item label="Image">
+                            <Upload
+                                accept={IMAGE_TYPES.join(',')}
+                                maxCount={1}
+                                beforeUpload={(file) => {
+                                    if (!IMAGE_TYPES.includes(file.type)) {
+                                        message.error('Only jpeg, jpg, png, webp allowed')
+                                        return Upload.LIST_IGNORE
+                                    }
+                                    setImageFile(file)
+                                    return false
+                                }}
+                                onRemove={() => setImageFile(null)}
+                            >
+                                <Button icon={<UploadOutlined />}>Choose Image</Button>
+                            </Upload>
 
-                {/* VIDEO */}
-                <Form.Item label="Video">
-                    <Upload
-                        accept="video/*"
-                        beforeUpload={(file) => {
-                            setVideoFile(file)
-                            return false
-                        }}
-                        showUploadList={{
-                            showRemoveIcon: true,
-                            onRemove: () => setVideoFile(null)
-                        }}
-                    >
-                        <AntButton icon={<UploadOutlined />}>
-                            Choose Video
-                        </AntButton>
-                    </Upload>
-                </Form.Item>
+                            {imageFile && (
+                                <img
+                                    src={URL.createObjectURL(imageFile)}
+                                    className="w-40 h-40 object-cover rounded-lg mt-3"
+                                />
+                            )}
+                        </Form.Item>
+                    </Col>
 
-                {/* DEFAULT TRUE */}
-                <Form.Item
-                    name="isGymMachine"
-                    label="Gym Machine"
-                    valuePropName="checked"
-                >
+                    {/* VIDEO */}
+                    <Col span={12}>
+                        <Form.Item label="Video">
+                            <Upload
+                                accept="video/*"
+                                maxCount={1}
+                                beforeUpload={(file) => {
+                                    setVideoFile(file)
+                                    return false
+                                }}
+                                onRemove={() => setVideoFile(null)}
+                            >
+                                <Button icon={<UploadOutlined />}>Choose Video</Button>
+                            </Upload>
+
+                            {videoFile && (
+                                <video
+                                    src={URL.createObjectURL(videoFile)}
+                                    controls
+                                    className="w-full rounded-lg mt-3"
+                                />
+                            )}
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Form.Item name="isGymMachine" label="Gym Machine" valuePropName="checked">
                     <Switch />
                 </Form.Item>
 
-                <Form.Item
-                    name="instruction"
-                    label="Instruction"
-                >
-                    <Input.TextArea
-                        rows={4}
-                        placeholder="Enter instruction"
-                    />
+                <Form.Item name="instruction" label="Instruction">
+                    <Input.TextArea rows={4} />
                 </Form.Item>
 
                 <div className="flex justify-end gap-3">
-                    <AntButton onClick={handleCancel}>
-                        Cancel
-                    </AntButton>
-
-                    <AntButton
-                        type="primary"
-                        htmlType="submit"
-                        loading={loading}
-                    >
+                    <Button onClick={handleCancel}>Cancel</Button>
+                    <Button type="primary" htmlType="submit" loading={loading}>
                         Create
-                    </AntButton>
+                    </Button>
                 </div>
             </Form>
         </Modal>
