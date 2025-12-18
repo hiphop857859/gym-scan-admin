@@ -39,11 +39,11 @@ const Columns = ({ handleOpenModalDetail, handleOpenModalDelete }: Props): Colum
       title: 'kcal',
       dataIndex: 'kcal'
     },
-    {
-      title: 'Tags',
-      dataIndex: 'tags',
-      render: (tags: string[]) => tags?.map((tag) => <Tag key={tag}>{tag}</Tag>)
-    },
+    // {
+    //   title: 'Tags',
+    //   dataIndex: 'tags',
+    //   render: (tags: string[]) => tags?.map((tag) => <Tag key={tag}>{tag}</Tag>)
+    // },
     {
       title: 'Source',
       dataIndex: 'isAdmin',

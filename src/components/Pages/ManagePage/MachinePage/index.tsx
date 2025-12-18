@@ -42,7 +42,7 @@ const MachinePage = () => {
     checkNeedRecall
   } = usePaging({})
 
-  /* ================= GET LIST ================= */
+  /* ================= FETCH LIST ================= */
   const { data, loading, refetch } = useQuery({
     func: Service.getMachines,
     params: {
@@ -54,12 +54,12 @@ const MachinePage = () => {
     isQuery: true,
     onSuccess: (res: any) => {
       setTotal(res.total)
-      if (checkNeedRecall(res.total)) handleFetch()
+      if (checkNeedRecall(res.total)) reloadList()
     }
   })
 
   /* ================= FETCH ================= */
-  const handleFetch = (params?: PageParams & { sorts?: string }) => {
+  const reloadList = (params?: PageParams & { sorts?: string }) => {
     refetch({
       limit: paginationQueryParams().pageSize,
       page: paginationQueryParams().pageNumber,
@@ -68,10 +68,16 @@ const MachinePage = () => {
     })
   }
 
+  /* ================= RELOAD AFTER CREATE / UPDATE ================= */
+  const reloadListAfterSubmit = () => {
+    resetCurrent()      // 🔥 QUAN TRỌNG
+    reloadList()
+  }
+
   /* ================= SEARCH ================= */
   const handleSearch = () => {
     resetCurrent()
-    handleFetch()
+    reloadList()
   }
 
   return (
@@ -83,7 +89,6 @@ const MachinePage = () => {
             {/* SEARCH */}
             <Form form={formSearch} layout="vertical" className="p-2">
               <div className="flex items-end gap-3">
-                {/* SEARCH INPUT */}
                 <Form.Item
                   name="q"
                   className="mb-0 w-[300px]"
@@ -95,14 +100,12 @@ const MachinePage = () => {
                   />
                 </Form.Item>
 
-                {/* SEARCH BUTTON */}
                 <Button
                   isLoading={loading}
                   onClick={handleSearch}
                   text="Search"
                 />
 
-                {/* CREATE BUTTON */}
                 <Button
                   type="primary"
                   onClick={() => setModalCreateOpen(true)}
@@ -110,9 +113,6 @@ const MachinePage = () => {
                 />
               </div>
             </Form>
-
-
-
 
             {/* TABLE */}
             <Table
@@ -129,7 +129,7 @@ const MachinePage = () => {
                   sorts = `${order}${sorter.field}`
                 }
 
-                handleFetch({ sorts })
+                reloadList({ sorts })
               }}
               columns={Column({
                 handleOpenModalDetail,
@@ -137,7 +137,6 @@ const MachinePage = () => {
               })}
               emptyText="No machines found."
             />
-
           </div>
         </div>
       </div>
@@ -149,7 +148,7 @@ const MachinePage = () => {
         <ModalDetail
           modalDetailId={modalDetailId}
           handleCancel={handleCancelDetail}
-          handleOk={handleFetch}
+          handleOk={reloadList}
         />
       )}
 
@@ -158,7 +157,7 @@ const MachinePage = () => {
         <ModalUpdate
           modalUpdateId={modalUpdateId}
           handleCancel={handleCancelUpdate}
-          handleOk={handleFetch}
+          handleOk={reloadListAfterSubmit} // 🔥
         />
       )}
 
@@ -167,7 +166,7 @@ const MachinePage = () => {
         <ModalCreate
           open={modalCreateOpen}
           handleCancel={handleCancelCreate}
-          handleOk={handleFetch}
+          handleOk={reloadListAfterSubmit} // 🔥
         />
       )}
     </>

@@ -11,6 +11,7 @@ import { useDirtyForm } from 'src/Hook/useDirtyForm'
 import { Service } from 'src/services'
 import Select from 'src/components/Atomic/Form/Select'
 import TextArea from 'src/components/Atomic/Form/TextArea'
+import ButtonAdd from 'src/components/Atomic/Button/ButtonAdd'
 
 export type Props = {
   handleCancel: () => void
@@ -33,27 +34,28 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
 
   const title = isNew ? 'Create Recipe' : 'Update Recipe'
 
-  // Create
+  /* ================= CREATE ================= */
   const { fetch: createRecipe, loading: loadingCreate } = useQuery({
     func: Service.createRecipe,
     onSuccess: () => {
       showSuccess('Recipe created')
-      handleOk?.()
       handleCancel()
+      handleOk?.()
     }
   })
 
-  // Update
+  /* ================= UPDATE ================= */
   const { fetch: updateRecipe, loading: loadingUpdate } = useQuery({
     func: Service.updateRecipe,
     onSuccess: () => {
       showSuccess('Recipe updated')
-      handleOk?.()
       handleCancel()
+
+      handleOk?.()
     }
   })
 
-  // Get detail if editing
+  /* ================= DETAIL ================= */
   useQuery({
     func: Service.getRecipeDetail,
     isQuery: !isNew,
@@ -64,54 +66,50 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
         type: res.type,
         description: res.description,
         time: res.time,
-        tags: res.tags.join(','),
+        tags: res.tags?.join(','),
         kcal: res.kcal,
         proteins: res.proteins,
         carbs: res.carbs,
         fats: res.fats,
-        instructions: res.instructions.join('\n'), // Convert array → multiline text
-        ingredients: res.ingredients // Already array
+        instructions: res.instructions?.join('\n'),
+        ingredients: res.ingredients
       })
     }
   })
 
+  /* ================= SUBMIT ================= */
   const onSubmit = () => {
     form.validateFields().then((values) => {
       const payload = {
         ...values,
-
-        // convert tags: "a,b" -> ["a", "b"]
         tags: values.tags
           ? values.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
           : [],
-
-        // instructions: textarea -> array
         instructions: values.instructions
           ? values.instructions.split('\n').map((i: string) => i.trim()).filter(Boolean)
           : [],
-
-        // ensure ingredients is array
         ingredients: Array.isArray(values.ingredients) ? values.ingredients : []
       }
 
-      console.log("FINAL PAYLOAD SENT TO API:", payload)
+      console.log('FINAL PAYLOAD:', payload)
 
       if (isNew) return createRecipe(payload)
 
       return updateRecipe({
         vars: { id: modalDetailId },
-
         payload
       })
     })
   }
 
+  /* ================= FOOTER ================= */
   const footer = (
     <ModalFooterContainer
       array={[
         <>
           <ButtonCancel onClick={handleCancel} />
           <ButtonConfirm
+            htmlType="button"
             disabled={!isFormDirty}
             isLoading={loadingCreate || loadingUpdate}
             onClick={onSubmit}
@@ -122,71 +120,79 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
   )
 
   return (
-    <ModalContainer title={title} footer={footer} onCancel={handleCancel} destroyOnClose>
-      <Form layout="vertical" form={form} autoComplete="off">
+    <ModalContainer
+      title={title}
+      footer={footer}
+      onCancel={handleCancel}
+      destroyOnClose
+      width={900}
+    >
+      <Form
+        layout="vertical"
+        form={form}
+        autoComplete="off"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.preventDefault()
+        }}
+      >
 
-        {/* BASIC INFO */}
+        {/* ================= BASIC INFO ================= */}
         <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-          <TextInput placeholder="Recipe name" />
+          <TextInput size="large" placeholder="Recipe name" />
         </Form.Item>
 
         <Form.Item label="Type" name="type" rules={[{ required: true }]}>
-          <Select data={mealTypes} keyItem="id" valueItem="id" placeholder="Select meal type" />
+          <Select size="large" data={mealTypes} keyItem="id" valueItem="id" />
         </Form.Item>
 
         <Form.Item label="Description" name="description">
-          <TextInput placeholder="Short description" />
+          <TextInput size="large" placeholder="Short description" />
         </Form.Item>
 
         <Form.Item label="Time" name="time" rules={[{ required: true }]}>
-          <TextInput placeholder="e.g. 7:30 PM" />
+          <TextInput size="large" placeholder="e.g. 7:30 PM" />
         </Form.Item>
 
-        <Form.Item label="Tags" name="tags">
-          <TextInput placeholder="high-protein, gym, low-carb" />
-        </Form.Item>
-
-        {/* MACROS */}
-        <div className="grid grid-cols-4 gap-2">
+        {/* ================= MACROS ================= */}
+        <div className="grid grid-cols-4 gap-4">
           <Form.Item label="kcal" name="kcal" rules={[{ required: true }]}>
-            <NumberInput />
+            <NumberInput size="large" min={0} />
           </Form.Item>
           <Form.Item label="Protein" name="proteins" rules={[{ required: true }]}>
-            <NumberInput />
+            <NumberInput size="large" min={0} />
           </Form.Item>
           <Form.Item label="Carbs" name="carbs" rules={[{ required: true }]}>
-            <NumberInput />
+            <NumberInput size="large" min={0} />
           </Form.Item>
           <Form.Item label="Fats" name="fats" rules={[{ required: true }]}>
-            <NumberInput />
+            <NumberInput size="large" min={0} />
           </Form.Item>
         </div>
 
-        {/* INGREDIENTS */}
+        {/* ================= INGREDIENTS ================= */}
         <Form.List name="ingredients">
           {(fields, { add, remove }) => (
             <div className="mt-6">
-              {/* Header */}
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Ingredients</h3>
-                <ButtonConfirm text="+ Add Ingredient" onClick={() => add()} />
+                <h3 className="text-xl font-semibold text-white">Ingredients</h3>
+                <ButtonAdd size="large" text="+ Add Ingredient" onClick={() => add({ gam: 0 })} />
               </div>
 
-              {/* Each Ingredient */}
               {fields.map(({ key, name }) => (
                 <div
                   key={key}
-                  className="p-4 rounded-xl bg-white/5 border border-white/10 mb-4 shadow-md"
+                  className="p-6 rounded-2xl bg-white/5 border border-white/10 mb-6 shadow-md"
                 >
-                  <div className="grid grid-cols-12 gap-4 items-start">
+                  <div className="grid grid-cols-12 gap-6 items-start">
+
                     {/* Name */}
-                    <div className="col-span-4">
+                    <div className="col-span-3">
                       <Form.Item
                         label="Name"
                         name={[name, 'name']}
-                        rules={[{ required: true, message: 'Required' }]}
+                        rules={[{ required: true }]}
                       >
-                        <TextInput placeholder="E.g. Chicken breast" />
+                        <TextInput size="large" />
                       </Form.Item>
                     </div>
 
@@ -195,29 +201,68 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
                       <Form.Item
                         label="Quantity"
                         name={[name, 'quantity']}
-                        rules={[{ required: true, message: 'Required' }]}
+                        rules={[{ required: true }]}
                       >
-                        <TextInput placeholder="150g" />
+                        <TextInput size="large" />
+                      </Form.Item>
+                    </div>
+
+                    {/* Gram */}
+                    <div className="col-span-2">
+                      <Form.Item
+                        label="Gram (g)"
+                        name={[name, 'gam']}
+                        rules={[
+                          {
+                            /*************  ✨ Windsurf Command ⭐  *************/
+                            /**
+                             * Validator for ingredient quantity.
+                             * Requires the input to be a non-negative number.
+                             * Rejects with an error if the input is undefined, null, or less than 0.
+                             */
+                            /*******  2c6aec7b-d40f-4be1-85f6-e57bd363dfee  *******/
+                            validator: (_, value) => {
+                              if (value === undefined || value === null) {
+                                return Promise.reject(new Error('Required'))
+                              }
+                              if (value < 0) {
+                                return Promise.reject(new Error('Must be ≥ 0'))
+                              }
+                              return Promise.resolve()
+                            }
+                          }
+                        ]}
+                      >
+
+                        <NumberInput
+                          size="medium"
+                          min={0}
+                          precision={0}
+                          placeholder="0"
+                          addonAfter="g"
+                        />
                       </Form.Item>
                     </div>
 
                     {/* Description */}
-                    <div className="col-span-4">
+                    <div className="col-span-3">
                       <Form.Item label="Description" name={[name, 'description']}>
-                        <TextInput placeholder="optional..." />
+                        <TextInput size="large" />
                       </Form.Item>
                     </div>
 
-                    {/* Remove button */}
-                    <div className="col-span-1 flex items-center justify-end mt-6">
+                    {/* Remove */}
+                    <div className="col-span-1 flex items-center justify-end mt-7">
                       <button
+                        type="button"
                         onClick={() => remove(name)}
                         className="text-red-400 hover:text-red-300 hover:bg-red-400/10
-                           px-2 py-1 rounded-md transition-all"
+                          px-2 py-1 rounded-md transition-all"
                       >
                         ✕
                       </button>
                     </div>
+
                   </div>
                 </div>
               ))}
@@ -225,13 +270,13 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
           )}
         </Form.List>
 
-        {/* INSTRUCTIONS */}
+        {/* ================= INSTRUCTIONS ================= */}
         <Form.Item
           label="Instructions (each step on a new line)"
           name="instructions"
           rules={[{ required: true }]}
         >
-          <TextArea rows={5} placeholder="Step 1\nStep 2\nStep 3..." />
+          <TextArea size="large" rows={6} placeholder="Step 1\nStep 2\nStep 3..." />
         </Form.Item>
 
       </Form>
