@@ -9,6 +9,8 @@ export const recipeService = {
 
   // CREATE
   createRecipe: (payload: RecipePayload) => API.POST<RecipeDetail>(API.recipe, { payload }),
+  // src/services/index.ts
+  getIngredientLibrary: () => API.GET<any>(API.ingredientLibrary, {}),
 
   // DETAIL
   getRecipeDetail: (vars: Vars) => API.GET<RecipeDetail>(API.recipeId, { vars }),

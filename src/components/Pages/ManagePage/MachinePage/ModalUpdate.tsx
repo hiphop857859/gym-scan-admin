@@ -1,4 +1,4 @@
-import { Form, Modal, Switch, Upload, message, Button, Input, Row, Col } from 'antd'
+import { Form, Modal, Upload, message, Button, Input, Row, Col } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 
@@ -13,6 +13,15 @@ interface Props {
 }
 
 const IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
+/** Auto-generate machine key from name */
+const generateMachineKey = (name: string) => {
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s]/g, '') // remove special chars
+        .replace(/\s+/g, '_')        // space -> underscore
+}
 
 const ModalUpdate = ({ modalUpdateId, handleCancel, handleOk }: Props) => {
     const [form] = Form.useForm()
@@ -72,22 +81,39 @@ const ModalUpdate = ({ modalUpdateId, handleCancel, handleOk }: Props) => {
             width={800}
             destroyOnClose
         >
-            <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                onValuesChange={(changedValues) => {
+                    if (changedValues.deviceName) {
+                        form.setFieldsValue({
+                            machineKey: generateMachineKey(changedValues.deviceName)
+                        })
+                    }
+                }}
+            >
                 <Row gutter={16}>
                     <Col span={12}>
-                        <Form.Item label="Machine Name" name="deviceName" rules={[{ required: true }]}>
+                        <Form.Item
+                            label="Machine Name"
+                            name="deviceName"
+                            rules={[{ required: true }]}
+                        >
                             <TextInput />
                         </Form.Item>
                     </Col>
 
                     <Col span={12}>
-                        <Form.Item label="Machine Key" name="machineKey" rules={[{ required: true }]}>
-                            <TextInput />
+                        <Form.Item label="Machine Key" name="machineKey">
+                            {/* 🔒 System generated */}
+                            <TextInput disabled />
                         </Form.Item>
                     </Col>
                 </Row>
 
                 <Row gutter={16}>
+                    {/* IMAGE */}
                     <Col span={12}>
                         <Form.Item label="Image">
                             <Upload
@@ -122,6 +148,7 @@ const ModalUpdate = ({ modalUpdateId, handleCancel, handleOk }: Props) => {
                         </Form.Item>
                     </Col>
 
+                    {/* VIDEO */}
                     <Col span={12}>
                         <Form.Item label="Video">
                             <Upload
@@ -154,8 +181,6 @@ const ModalUpdate = ({ modalUpdateId, handleCancel, handleOk }: Props) => {
                         </Form.Item>
                     </Col>
                 </Row>
-
-
 
                 <Form.Item name="instruction" label="Instruction">
                     <Input.TextArea rows={4} />

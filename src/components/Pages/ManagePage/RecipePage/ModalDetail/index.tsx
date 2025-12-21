@@ -1,4 +1,7 @@
-import { Form } from 'antd'
+import { Form, TimePicker } from 'antd'
+import dayjs from 'dayjs'
+import { useEffect, useMemo, useState } from 'react'
+
 import TextInput from 'src/components/Atomic/Form/TextInput'
 import NumberInput from 'src/components/Atomic/Form/NumberInput'
 import ButtonConfirm from 'src/components/Atomic/Button/ButtonConfirm'
@@ -32,6 +35,53 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
   const { isFormDirty } = useDirtyForm(form)
   const { showSuccess } = useToast()
 
+  /* ================= INGREDIENT LIBRARY ================= */
+  const [ingredientLibrary, setIngredientLibrary] = useState<any[]>([])
+
+  useQuery({
+    func: Service.getIngredientLibrary,
+    isQuery: true,
+    onSuccess: (res) => {
+      setIngredientLibrary(Array.isArray(res) ? res : [])
+    }
+  })
+
+  const selectedType = Form.useWatch('type', form)
+
+  const ingredientOptions = useMemo(() => {
+    if (!selectedType) return []
+
+    const baseOptions = ingredientLibrary
+      .filter((item) => item.category === selectedType)
+      .map((item) => ({
+        id: item.name,
+        name: item.name
+      }))
+
+    const currentIngredients = form.getFieldValue('ingredients') || []
+
+    currentIngredients.forEach((ing: any) => {
+      if (
+        ing?.name &&
+        !baseOptions.find((opt) => opt.id === ing.name)
+      ) {
+        baseOptions.push({
+          id: ing.name,
+          name: ing.name
+        })
+      }
+    })
+
+    return baseOptions
+  }, [ingredientLibrary, selectedType])
+
+
+  useEffect(() => {
+    if (isNew && selectedType) {
+      form.setFieldsValue({ ingredients: [] })
+    }
+  }, [selectedType, isNew])
+
   const title = isNew ? 'Create Recipe' : 'Update Recipe'
 
   /* ================= CREATE ================= */
@@ -50,7 +100,6 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
     onSuccess: () => {
       showSuccess('Recipe updated')
       handleCancel()
-
       handleOk?.()
     }
   })
@@ -65,7 +114,7 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
         name: res.name,
         type: res.type,
         description: res.description,
-        time: res.time,
+        time: res.time ? dayjs(res.time, 'HH:mm') : null,
         tags: res.tags?.join(','),
         kcal: res.kcal,
         proteins: res.proteins,
@@ -82,6 +131,7 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
     form.validateFields().then((values) => {
       const payload = {
         ...values,
+        time: values.time ? values.time.format('HH:mm') : null,
         tags: values.tags
           ? values.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
           : [],
@@ -90,8 +140,6 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
           : [],
         ingredients: Array.isArray(values.ingredients) ? values.ingredients : []
       }
-
-      console.log('FINAL PAYLOAD:', payload)
 
       if (isNew) return createRecipe(payload)
 
@@ -135,7 +183,6 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
           if (e.key === 'Enter') e.preventDefault()
         }}
       >
-
         {/* ================= BASIC INFO ================= */}
         <Form.Item label="Name" name="name" rules={[{ required: true }]}>
           <TextInput size="large" placeholder="Recipe name" />
@@ -149,8 +196,19 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
           <TextInput size="large" placeholder="Short description" />
         </Form.Item>
 
-        <Form.Item label="Time" name="time" rules={[{ required: true }]}>
-          <TextInput size="large" placeholder="e.g. 7:30 PM" />
+        {/* ================= TIME ================= */}
+        <Form.Item
+          label="Time"
+          name="time"
+          rules={[{ required: true, message: 'Please select time' }]}
+        >
+          <TimePicker
+            size="large"
+            format="HH:mm"
+            use12Hours={false}
+            className="w-full"
+            minuteStep={5}
+          />
         </Form.Item>
 
         {/* ================= MACROS ================= */}
@@ -184,19 +242,29 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
                   className="p-6 rounded-2xl bg-white/5 border border-white/10 mb-6 shadow-md"
                 >
                   <div className="grid grid-cols-12 gap-6 items-start">
-
-                    {/* Name */}
+                    {/* NAME */}
                     <div className="col-span-3">
                       <Form.Item
                         label="Name"
                         name={[name, 'name']}
                         rules={[{ required: true }]}
                       >
-                        <TextInput size="large" />
+                        <Select
+                          size="large"
+                          data={ingredientOptions}
+                          keyItem="id"
+                          valueItem="id"
+                          disabled={!selectedType}
+                          placeholder={
+                            selectedType
+                              ? 'Select ingredient'
+                              : 'Please select recipe type first'
+                          }
+                        />
                       </Form.Item>
                     </div>
 
-                    {/* Quantity */}
+                    {/* QUANTITY */}
                     <div className="col-span-3">
                       <Form.Item
                         label="Quantity"
@@ -207,33 +275,23 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
                       </Form.Item>
                     </div>
 
-                    {/* Gram */}
+                    {/* GRAM */}
                     <div className="col-span-2">
                       <Form.Item
                         label="Gram (g)"
                         name={[name, 'gam']}
                         rules={[
                           {
-                            /*************  ✨ Windsurf Command ⭐  *************/
-                            /**
-                             * Validator for ingredient quantity.
-                             * Requires the input to be a non-negative number.
-                             * Rejects with an error if the input is undefined, null, or less than 0.
-                             */
-                            /*******  2c6aec7b-d40f-4be1-85f6-e57bd363dfee  *******/
                             validator: (_, value) => {
-                              if (value === undefined || value === null) {
+                              if (value === undefined || value === null)
                                 return Promise.reject(new Error('Required'))
-                              }
-                              if (value < 0) {
+                              if (value < 0)
                                 return Promise.reject(new Error('Must be ≥ 0'))
-                              }
                               return Promise.resolve()
                             }
                           }
                         ]}
                       >
-
                         <NumberInput
                           size="medium"
                           min={0}
@@ -244,14 +302,14 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
                       </Form.Item>
                     </div>
 
-                    {/* Description */}
+                    {/* DESCRIPTION */}
                     <div className="col-span-3">
                       <Form.Item label="Description" name={[name, 'description']}>
                         <TextInput size="large" />
                       </Form.Item>
                     </div>
 
-                    {/* Remove */}
+                    {/* REMOVE */}
                     <div className="col-span-1 flex items-center justify-end mt-7">
                       <button
                         type="button"
@@ -262,7 +320,6 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
                         ✕
                       </button>
                     </div>
-
                   </div>
                 </div>
               ))}
@@ -278,7 +335,6 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
         >
           <TextArea size="large" rows={6} placeholder="Step 1\nStep 2\nStep 3..." />
         </Form.Item>
-
       </Form>
     </ModalContainer>
   )

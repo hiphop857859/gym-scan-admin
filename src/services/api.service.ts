@@ -136,6 +136,7 @@ export const API = {
   // Recipe API
   recipe: '/admin/recipe',
   recipeId: '/admin/recipe/{id}',
+  ingredientLibrary: '/ingredient-library',
 
   // Machine API
   machine: '/admin/machine-history',
