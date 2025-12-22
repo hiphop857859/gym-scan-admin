@@ -61,21 +61,15 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
     const currentIngredients = form.getFieldValue('ingredients') || []
 
     currentIngredients.forEach((ing: any) => {
-      if (
-        ing?.name &&
-        !baseOptions.find((opt) => opt.id === ing.name)
-      ) {
-        baseOptions.push({
-          id: ing.name,
-          name: ing.name
-        })
+      if (ing?.name && !baseOptions.find((opt) => opt.id === ing.name)) {
+        baseOptions.push({ id: ing.name, name: ing.name })
       }
     })
 
     return baseOptions
   }, [ingredientLibrary, selectedType])
 
-
+  /* ================= RESET INGREDIENTS WHEN CREATE ================= */
   useEffect(() => {
     if (isNew && selectedType) {
       form.setFieldsValue({ ingredients: [] })
@@ -105,11 +99,10 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
   })
 
   /* ================= DETAIL ================= */
-  useQuery({
+  const { fetch: fetchRecipeDetail } = useQuery({
     func: Service.getRecipeDetail,
-    isQuery: !isNew,
-    params: { id: modalDetailId },
     onSuccess: (res) => {
+      form.resetFields()
       form.setFieldsValue({
         name: res.name,
         type: res.type,
@@ -120,11 +113,28 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
         proteins: res.proteins,
         carbs: res.carbs,
         fats: res.fats,
-        instructions: res.instructions?.join('\n'),
-        ingredients: res.ingredients
+        instructions: Array.isArray(res.instructions) ? res.instructions : [],
+
+        ingredients: Array.isArray(res.ingredients)
+          ? res.ingredients.map((item: any) => ({
+            ...item,
+            gram: item.gam ?? 0 // 🔥 map gam → gram cho UI
+          }))
+          : []
       })
     }
   })
+
+  /* ================= CALL DETAIL WHEN EDIT ================= */
+  useEffect(() => {
+    if (modalDetailId && modalDetailId !== true) {
+      fetchRecipeDetail({ id: modalDetailId })
+    }
+
+    if (modalDetailId === true) {
+      form.resetFields()
+    }
+  }, [modalDetailId])
 
   /* ================= SUBMIT ================= */
   const onSubmit = () => {
@@ -133,15 +143,32 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
         ...values,
         time: values.time ? values.time.format('HH:mm') : null,
         tags: values.tags
-          ? values.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+          ? values.tags
+            .split(',')
+            .map((t: string) => t.trim())
+            .filter(Boolean)
           : [],
-        instructions: values.instructions
-          ? values.instructions.split('\n').map((i: string) => i.trim()).filter(Boolean)
+        instructions: Array.isArray(values.instructions)
+          ? values.instructions
+            .map((i: string) => i.trim())
+            .filter(Boolean)
           : [],
-        ingredients: Array.isArray(values.ingredients) ? values.ingredients : []
+
+        ingredients: Array.isArray(values.ingredients)
+          ? values.ingredients.map((item: any) => {
+            const { gram, ...rest } = item
+
+            return {
+              ...rest,
+              gam: gram // 🔥 map gram → gam (CREATE & UPDATE đều giống nhau)
+            }
+          })
+          : []
       }
 
-      if (isNew) return createRecipe(payload)
+      if (isNew) {
+        return createRecipe(payload)
+      }
 
       return updateRecipe({
         vars: { id: modalDetailId },
@@ -149,6 +176,7 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
       })
     })
   }
+
 
   /* ================= FOOTER ================= */
   const footer = (
@@ -185,7 +213,7 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
       >
         {/* ================= BASIC INFO ================= */}
         <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-          <TextInput size="large" placeholder="Recipe name" />
+          <TextInput size="large" />
         </Form.Item>
 
         <Form.Item label="Type" name="type" rules={[{ required: true }]}>
@@ -193,148 +221,146 @@ const ModalDetail = ({ handleCancel, handleOk, modalDetailId }: Props) => {
         </Form.Item>
 
         <Form.Item label="Description" name="description">
-          <TextInput size="large" placeholder="Short description" />
+          <TextInput size="large" />
         </Form.Item>
 
         {/* ================= TIME ================= */}
-        <Form.Item
-          label="Time"
-          name="time"
-          rules={[{ required: true, message: 'Please select time' }]}
-        >
-          <TimePicker
-            size="large"
-            format="HH:mm"
-            use12Hours={false}
-            className="w-full"
-            minuteStep={5}
-          />
+        <Form.Item label="Time" name="time" rules={[{ required: true }]}>
+          <TimePicker size="large" format="HH:mm" className="w-full" />
         </Form.Item>
 
         {/* ================= MACROS ================= */}
         <div className="grid grid-cols-4 gap-4">
           <Form.Item label="kcal" name="kcal" rules={[{ required: true }]}>
-            <NumberInput size="large" min={0} />
+            <NumberInput min={0} />
           </Form.Item>
           <Form.Item label="Protein" name="proteins" rules={[{ required: true }]}>
-            <NumberInput size="large" min={0} />
+            <NumberInput min={0} />
           </Form.Item>
           <Form.Item label="Carbs" name="carbs" rules={[{ required: true }]}>
-            <NumberInput size="large" min={0} />
+            <NumberInput min={0} />
           </Form.Item>
           <Form.Item label="Fats" name="fats" rules={[{ required: true }]}>
-            <NumberInput size="large" min={0} />
+            <NumberInput min={0} />
           </Form.Item>
         </div>
+
 
         {/* ================= INGREDIENTS ================= */}
         <Form.List name="ingredients">
           {(fields, { add, remove }) => (
-            <div className="mt-6">
+            <>
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-white">Ingredients</h3>
-                <ButtonAdd size="large" text="+ Add Ingredient" onClick={() => add({ gam: 0 })} />
+                <h3 className="text-xl font-semibold">Ingredients</h3>
+                <ButtonAdd text="+ Add Ingredient" onClick={() => add({ gram: 0 })} />
               </div>
 
-              {fields.map(({ key, name }) => (
+              {fields.map(({ key, name }, index) => (
                 <div
                   key={key}
-                  className="p-6 rounded-2xl bg-white/5 border border-white/10 mb-6 shadow-md"
+                  className="relative p-4 mb-3 border rounded-lg 
+                     bg-[rgba(255,255,255,0.02)] 
+                     hover:bg-[rgba(255,255,255,0.04)] transition"
                 >
-                  <div className="grid grid-cols-12 gap-6 items-start">
-                    {/* NAME */}
-                    <div className="col-span-3">
-                      <Form.Item
-                        label="Name"
-                        name={[name, 'name']}
-                        rules={[{ required: true }]}
-                      >
-                        <Select
-                          size="large"
-                          data={ingredientOptions}
-                          keyItem="id"
-                          valueItem="id"
-                          disabled={!selectedType}
-                          placeholder={
-                            selectedType
-                              ? 'Select ingredient'
-                              : 'Please select recipe type first'
-                          }
-                        />
-                      </Form.Item>
-                    </div>
+                  {/* Remove */}
+                  <button
+                    type="button"
+                    onClick={() => remove(name)}
+                    className="absolute top-3 right-3 text-red-500 hover:text-red-400"
+                  >
+                    ✕
+                  </button>
 
-                    {/* QUANTITY */}
-                    <div className="col-span-3">
-                      <Form.Item
-                        label="Quantity"
-                        name={[name, 'quantity']}
-                        rules={[{ required: true }]}
-                      >
-                        <TextInput size="large" />
-                      </Form.Item>
-                    </div>
+                  {/* Header */}
+                  <div className="mb-3 text-sm font-medium text-gray-300">
+                    Ingredient {index + 1}
+                  </div>
 
-                    {/* GRAM */}
-                    <div className="col-span-2">
-                      <Form.Item
-                        label="Gram (g)"
-                        name={[name, 'gam']}
-                        rules={[
-                          {
-                            validator: (_, value) => {
-                              if (value === undefined || value === null)
-                                return Promise.reject(new Error('Required'))
-                              if (value < 0)
-                                return Promise.reject(new Error('Must be ≥ 0'))
-                              return Promise.resolve()
-                            }
-                          }
-                        ]}
-                      >
-                        <NumberInput
-                          size="medium"
-                          min={0}
-                          precision={0}
-                          placeholder="0"
-                          addonAfter="g"
-                        />
-                      </Form.Item>
-                    </div>
+                  {/* Fields */}
+                  <div className="grid grid-cols-12 gap-4">
+                    <Form.Item
+                      label="Name"
+                      name={[name, 'name']}
+                      className="col-span-3"
+                      rules={[{ required: true }]}
+                    >
+                      <Select data={ingredientOptions} keyItem="id" valueItem="id" />
+                    </Form.Item>
 
-                    {/* DESCRIPTION */}
-                    <div className="col-span-3">
-                      <Form.Item label="Description" name={[name, 'description']}>
-                        <TextInput size="large" />
-                      </Form.Item>
-                    </div>
+                    <Form.Item
+                      label="Quantity"
+                      name={[name, 'quantity']}
+                      className="col-span-3"
+                      rules={[{ required: true }]}
+                    >
+                      <TextInput />
+                    </Form.Item>
 
-                    {/* REMOVE */}
-                    <div className="col-span-1 flex items-center justify-end mt-7">
-                      <button
-                        type="button"
-                        onClick={() => remove(name)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-400/10
-                          px-2 py-1 rounded-md transition-all"
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    <Form.Item
+                      label="Gram (g)"
+                      name={[name, 'gram']}
+                      className="col-span-2"
+                      rules={[{ required: true }]}
+                    >
+                      <NumberInput min={0} addonAfter="g" />
+                    </Form.Item>
+
+                    <Form.Item
+                      label="Description"
+                      name={[name, 'description']}
+                      className="col-span-4"
+                    >
+                      <TextInput placeholder="Optional" />
+                    </Form.Item>
                   </div>
                 </div>
               ))}
-            </div>
+            </>
           )}
         </Form.List>
 
         {/* ================= INSTRUCTIONS ================= */}
-        <Form.Item
-          label="Instructions (each step on a new line)"
-          name="instructions"
-          rules={[{ required: true }]}
-        >
-          <TextArea size="large" rows={6} placeholder="Step 1\nStep 2\nStep 3..." />
-        </Form.Item>
+        <Form.List name="instructions">
+          {(fields, { add, remove }) => (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">Instructions</h3>
+                <ButtonAdd text="+ Add Step" onClick={() => add('')} />
+              </div>
+
+              {fields.map(({ key, name }, index) => (
+                <div
+                  key={key}
+                  className="relative p-4 border rounded-lg mb-3 bg-[rgba(255,255,255,0.02)]"
+                >
+                  {/* Step label */}
+                  <div className="mb-2 text-sm font-medium text-gray-300">
+                    Step {index + 1}
+                  </div>
+
+                  {/* Input */}
+                  <Form.Item
+                    name={name}
+                    className="mb-0"
+                    rules={[{ required: true, message: 'Instruction is required' }]}
+                  >
+                    <TextInput placeholder="Describe this step..." />
+                  </Form.Item>
+
+                  {/* Remove button */}
+                  <button
+                    type="button"
+                    onClick={() => remove(name)}
+                    className="absolute top-3 right-3 text-red-500 hover:text-red-400"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
+        </Form.List>
+
       </Form>
     </ModalContainer>
   )

@@ -34,7 +34,7 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-6">
-          {/* IMAGE */}
+          {/* ================= IMAGE ================= */}
           <div>
             <p className="font-semibold mb-2">Image</p>
             {machine?.imageNewUrl ? (
@@ -48,7 +48,7 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
             )}
           </div>
 
-          {/* VIDEO */}
+          {/* ================= VIDEO ================= */}
           <div>
             <p className="font-semibold mb-2">Video</p>
             {machine?.videoNewUrl ? (
@@ -62,7 +62,7 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
             )}
           </div>
 
-          {/* INFO */}
+          {/* ================= INFO ================= */}
           <div className="col-span-2 grid grid-cols-2 gap-4">
             <div>
               <p className="font-semibold">Machine Name</p>
@@ -92,13 +92,27 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
               </p>
             </div>
 
-            {/* INSTRUCTION */}
-            <div className="col-span-2">
-              <p className="font-semibold">Instruction</p>
-              {machine?.instruction ? (
-                <p className="whitespace-pre-line">{machine.instruction}</p>
+            {/* ================= INSTRUCTIONS ================= */}
+            <div className="col-span-2 mt-4">
+              <p className="font-semibold mb-2">Instructions</p>
+
+              {Array.isArray(machine?.instructions) &&
+                machine.instructions.length > 0 ? (
+                <div className="space-y-3">
+                  {machine.instructions.map((step: string, index: number) => (
+                    <div
+                      key={index}
+                      className="p-3 border rounded-lg bg-[rgba(255,255,255,0.02)]"
+                    >
+                      <div className="text-sm font-medium text-gray-400 mb-1">
+                        Step {index + 1}
+                      </div>
+                      <div className="whitespace-pre-line">{step}</div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <Tag>No instruction</Tag>
+                <Tag>No instructions</Tag>
               )}
             </div>
           </div>
