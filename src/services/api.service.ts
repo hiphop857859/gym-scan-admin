@@ -140,5 +140,6 @@ export const API = {
 
   // Machine API
   machine: '/admin/machine-history',
-  machineId: '/admin/machine-history/{id}'
+  machineId: '/admin/machine-history/{id}',
+  exerciseMedia: '/admin/exercise-media'
 }

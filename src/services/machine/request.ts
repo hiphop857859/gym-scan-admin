@@ -7,7 +7,9 @@ export const machineService = {
   getMachines: (params: PageParams & { search?: string; sorts?: string }) => {
     return API.GET(API.machine, { params })
   },
-
+  getExerciseMedias: (params: PageParams & { search?: string; sorts?: string }) => {
+    return API.GET(API.exerciseMedia, { params })
+  },
   // GET DETAIL
   getMachineDetail: (id: string | boolean) => {
     return API.GET(API.machineId, { vars: { id } })

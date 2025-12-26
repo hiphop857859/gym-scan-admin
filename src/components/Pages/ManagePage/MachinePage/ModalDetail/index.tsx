@@ -115,6 +115,26 @@ const ModalDetail = ({ modalDetailId, handleCancel, handleOk }: Props) => {
                 <Tag>No instructions</Tag>
               )}
             </div>
+
+            {/* ================= EXERCISE MEDIAS ================= */}
+            <div className="col-span-2 mt-6">
+              <p className="font-semibold mb-2">Exercise Medias</p>
+
+              {Array.isArray(machine?.exerciseMedias) &&
+                machine.exerciseMedias.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {machine.exerciseMedias.map(
+                    (media: { media_id: string; media_name: string }) => (
+                      <Tag key={media.media_id} color="purple">
+                        {media.media_name}
+                      </Tag>
+                    )
+                  )}
+                </div>
+              ) : (
+                <Tag>No exercise medias</Tag>
+              )}
+            </div>
           </div>
         </div>
       )}

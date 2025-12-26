@@ -1,6 +1,17 @@
-import { Form, Modal, Upload, message, Button, Input, Row, Col } from 'antd'
+import {
+    Form,
+    Modal,
+    Upload,
+    message,
+    Button,
+    Input,
+    Row,
+    Col,
+    Select,
+    Tag
+} from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import TextInput from 'src/components/Atomic/Form/TextInput'
 import { useQuery } from 'src/Hook/useQuery'
@@ -15,18 +26,23 @@ interface Props {
 const IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
 /** Auto-generate machine key from name */
-const generateMachineKey = (name: string) => {
-    return name
+const generateMachineKey = (name: string) =>
+    name
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9\s]/g, '')
         .replace(/\s+/g, '_')
-}
 
 const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
     const [form] = Form.useForm()
+
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [videoFile, setVideoFile] = useState<File | null>(null)
+
+    /* ================= EXERCISE MEDIA SEARCH ================= */
+    const [mediaOptions, setMediaOptions] = useState<any[]>([])
+    const [mediaLoading, setMediaLoading] = useState(false)
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
     const { fetch, loading } = useQuery({
         func: Service.createMachine,
@@ -38,6 +54,7 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
             form.resetFields()
             setImageFile(null)
             setVideoFile(null)
+            setMediaOptions([])
         }
     })
 
@@ -46,12 +63,50 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
             form.resetFields()
             setImageFile(null)
             setVideoFile(null)
+            setMediaOptions([])
         }
     }, [open])
 
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current)
+            }
+        }
+    }, [])
+
+    /* ================= FETCH MEDIA API ================= */
+    const fetchExerciseMedias = async (search = '') => {
+        setMediaLoading(true)
+        try {
+            const res = await Service.getExerciseMedias({
+                page: 1,
+                limit: 10,
+                sorts: '-createdAt',
+                search
+            })
+
+            setMediaOptions(res?.items || [])
+        } catch (err) {
+            message.error('Failed to load exercise medias')
+        } finally {
+            setMediaLoading(false)
+        }
+    }
+
+    /* ================= DEBOUNCE SEARCH ================= */
+    const handleSearchExerciseMedia = (value: string) => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current)
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchExerciseMedias(value)
+        }, 500)
+    }
+
     /* ================= SUBMIT ================= */
     const handleSubmit = (values: any) => {
-        // Validate upload
         if (!imageFile) {
             message.error('Image is required')
             return
@@ -68,6 +123,10 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
             if (key === 'instructions' && Array.isArray(value)) {
                 value.forEach((item: string, index: number) => {
                     formData.append(`instructions[${index}]`, item)
+                })
+            } else if (key === 'exerciseMedias' && Array.isArray(value)) {
+                value.forEach((id: string, index: number) => {
+                    formData.append(`exerciseMedias[${index}]`, id)
                 })
             } else {
                 formData.append(key, value ?? '')
@@ -86,7 +145,7 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
             title="Create Machine"
             onCancel={handleCancel}
             footer={null}
-            width={800}
+            width={900}
             destroyOnClose
         >
             <Form
@@ -179,15 +238,9 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
                 </Row>
 
                 {/* ================= INSTRUCTIONS ================= */}
-                {/* ================= INSTRUCTIONS ================= */}
-                <Form.Item
-                    label="Instructions"
-                    required
-                    shouldUpdate
-                >
+                <Form.Item label="Instructions" required shouldUpdate>
                     {() => {
                         const instructions = form.getFieldValue('instructions')
-
                         const hasError = !instructions || instructions.length === 0
 
                         return (
@@ -208,16 +261,12 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
                                 >
                                     {(fields, { add, remove }) => (
                                         <>
-                                            <div className="flex justify-between items-center mb-3">
-                                                <Button onClick={() => add('')}>+ Add Step</Button>
-                                            </div>
+                                            <Button onClick={() => add('')}>+ Add Step</Button>
 
                                             {fields.map(({ key, name }, index) => (
                                                 <div
                                                     key={key}
-                                                    className="relative p-4 mb-3 border rounded-lg
-                             bg-[rgba(255,255,255,0.02)]
-                             hover:bg-[rgba(255,255,255,0.04)] transition"
+                                                    className="relative p-4 mb-3 border rounded-lg"
                                                 >
                                                     <button
                                                         type="button"
@@ -227,16 +276,14 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
                                                         ✕
                                                     </button>
 
-                                                    <div className="mb-2 text-sm font-medium text-gray-300">
+                                                    <div className="mb-2 font-medium">
                                                         Step {index + 1}
                                                     </div>
 
                                                     <Form.Item
                                                         name={name}
+                                                        rules={[{ required: true }]}
                                                         className="mb-0"
-                                                        rules={[
-                                                            { required: true, message: 'Instruction is required' }
-                                                        ]}
                                                     >
                                                         <Input.TextArea rows={2} />
                                                     </Form.Item>
@@ -246,7 +293,6 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
                                     )}
                                 </Form.List>
 
-                                {/* Error message for empty list */}
                                 {hasError && (
                                     <div className="text-red-500 text-sm mt-1">
                                         Instructions is required
@@ -257,6 +303,48 @@ const ModalCreate = ({ open, handleCancel, handleOk }: Props) => {
                     }}
                 </Form.Item>
 
+                {/* ================= EXERCISE MEDIAS ================= */}
+                <Form.Item label="Exercise Medias" name="exerciseMedias">
+                    <Select
+                        mode="multiple"
+                        showSearch
+                        allowClear
+                        placeholder="Search exercise media"
+                        loading={mediaLoading}
+                        filterOption={false}
+                        onSearch={handleSearchExerciseMedia}
+                        onFocus={() => fetchExerciseMedias('')}
+                        optionLabelProp="label"
+                        tagRender={(props) => (
+                            <Tag closable={props.closable} onClose={props.onClose}>
+                                {props.label}
+                            </Tag>
+                        )}
+                    >
+                        {mediaOptions.map((item) => (
+                            <Select.Option
+                                key={item.id}
+                                value={item.id}
+                                label={item.name}
+                            >
+                                <div className="flex gap-3 items-center">
+                                    {item.gifUrl && (
+                                        <img
+                                            src={item.gifUrl}
+                                            className="w-10 h-10 object-cover rounded"
+                                        />
+                                    )}
+                                    <div className="flex flex-col">
+                                        <strong>{item.name}</strong>
+                                        <span className="text-xs text-gray-400">
+                                            {item.bodyPart} · {item.exerciseType}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
 
                 {/* ================= FOOTER ================= */}
                 <div className="flex justify-end gap-3 mt-6">
