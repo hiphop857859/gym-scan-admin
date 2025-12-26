@@ -307,11 +307,19 @@ const ModalUpdate = ({ modalUpdateId, handleCancel, handleOk }: Props) => {
                         >
                             {mediaOptions.map((item) => (
                                 <Select.Option key={item.id} value={item.id} label={item.name}>
-                                    <div className="flex flex-col">
-                                        <strong>{item.name}</strong>
-                                        <span className="text-xs text-gray-400">
-                                            {item.bodyPart} · {item.exerciseType}
-                                        </span>
+                                    <div className="flex gap-3 items-center">
+                                        {item.gifUrl && (
+                                            <img
+                                                src={item.gifUrl}
+                                                className="w-10 h-10 object-cover rounded"
+                                            />
+                                        )}
+                                        <div className="flex flex-col">
+                                            <strong>{item.name}</strong>
+                                            <span className="text-xs text-gray-400">
+                                                {item.bodyPart} · {item.exerciseType}
+                                            </span>
+                                        </div>
                                     </div>
                                 </Select.Option>
                             ))}
