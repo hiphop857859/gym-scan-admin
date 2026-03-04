@@ -164,7 +164,8 @@ const StaffPage = () => {
                   />
                 </Form.Item>
                 <Button isLoading={loading} onClick={handleSearch} text='Search'></Button>
-                {/* <Button text='Create new' onClick={() => setIdModalDetail(true)} /> */}
+
+                <Button text='Create Ambassador' onClick={() => setIdModalDetail(true)} />
               </div>
               {/* <div className='flex justify-end'>
                 <LanguageToggle onChange={handleFetch} />

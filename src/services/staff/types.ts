@@ -17,6 +17,7 @@ export interface Staff {
   googleId?: string
   status?: string
   roles?: number[]
+  referralCode?: string
 }
 
 export interface Staffs extends ResponseListNew<Staff> {}

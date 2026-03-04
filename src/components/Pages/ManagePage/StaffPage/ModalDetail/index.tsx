@@ -1,8 +1,7 @@
-import { Form, message, Select, Tooltip, Switch, Input } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { Form, message, Tooltip, Switch, Input } from 'antd'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import ButtonCancel from 'src/components/Atomic/Button/ButtonCancel'
 import ButtonConfirm from 'src/components/Atomic/Button/ButtonConfirm'
-import NumberInput from 'src/components/Atomic/Form/NumberInput'
 import TextInput from 'src/components/Atomic/Form/TextInput'
 import ModalContainer from 'src/components/Containers/ModalContainer'
 import ModalFooterContainer from 'src/components/Containers/ModalFooterContainer'
@@ -11,7 +10,7 @@ import { useDirtyForm } from 'src/Hook/useDirtyForm'
 import { useQuery } from 'src/Hook/useQuery'
 import { useToast } from 'src/Hook/useToast'
 import { Service } from 'src/services'
-import { EUserGender, UserRole } from 'src/services/user/types'
+import { UserRole } from 'src/services/user/types'
 import { checkIsFormError, getSingerErrorMessage } from 'src/helpers/ultils'
 
 export type Props = {
@@ -22,14 +21,25 @@ export type Props = {
 
 const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
   const [isLoading, setIsLoading] = useState(false)
-  const [isUpdate, setIsUpdate] = useState(false)
 
   const [form] = Form.useForm()
   const isNew = typeof modalDetailId === 'boolean'
-  const titleModal = isNew ? 'Create new staff' : 'User detail'
+  const titleModal = isNew ? 'Create new Ambassador' : 'User detail'
 
   const { isFormDirty } = useDirtyForm(form)
   const { showSuccess } = useToast()
+
+  // watch referralCode
+  const referralCode = Form.useWatch('referralCode', form)
+
+  useEffect(() => {
+    if (isNew) {
+      form.resetFields()
+      form.setFieldsValue({
+        ambassador: true
+      })
+    }
+  }, [isNew, form])
 
   const handleSuccess = () => {
     handleCancel()
@@ -62,24 +72,20 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
     options: { noCache: true },
     params: { id: modalDetailId.toString() },
     onSuccess: (_value) => {
-
-
-      setIsUpdate(true)
       form.setFieldsValue({
         name: _value.name,
         phone: _value.phone,
-        gender: _value.gender,
-        age: _value.age,
         email: _value.email,
         appleId: _value.appleId,
         googleId: _value.googleId,
         ambassador: _value.roles?.includes(UserRole.AMBASSADOR_MEMBER),
-        status: _value?.isBanned ? 'Banned' : 'Active'
+        status: _value?.isBanned ? 'Banned' : 'Active',
+        referralCode: _value.referralCode
       })
     }
   })
 
-  // Validation rules
+  // Validation
   const validateName = (_: any, value: string) => {
     if (!value || !value.trim()) return Promise.reject('Name cannot be empty.')
     const regex = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]{1,100}$/
@@ -105,13 +111,17 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
       .validateFields()
       .then(async (values) => {
         setIsLoading(true)
+
         if (isNew) {
-          await createStaff(values)
+          const payload = {
+            ...values,
+            ambassador: true
+          }
+          await createStaff(payload)
         } else {
           const input = {
             name: values.name,
             phone: values.phone,
-
             ambassador: values.ambassador
           }
           await updateStaff({ payload: input, vars: { id: modalDetailId } })
@@ -150,34 +160,65 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
       destroyOnClose
     >
       <Form layout="vertical" form={form} className="grid grid-cols-1 gap-1" autoComplete="off">
-        {/* Editable fields */}
+
+        {/* register referralCode hidden */}
+        <Form.Item name="referralCode" hidden>
+          <Input />
+        </Form.Item>
+
         <Form.Item name="name" label="Name" rules={[{ validator: validateName }]} required>
           <TextInput placeholder="Name" />
         </Form.Item>
 
-        <Form.Item name="phone" label="Phone number" rules={[{ validator: validatePhone }]}>
-          <TextInput placeholder="+1 234 567 890" />
-        </Form.Item>
-
-
-        <Form.Item name="status" label="Status">
-          <Input disabled />
-        </Form.Item>
         <Form.Item
-          name="ambassador"
-          label="Ambassador"
-          valuePropName="checked"
-          tooltip="Enable if this user is an ambassador"
+          name="email"
+          label="Email"
+          rules={isNew ? [{ required: true, message: 'Email is required' }] : []}
         >
-          <Switch />
+          <Input disabled={!isNew} placeholder="Email" />
         </Form.Item>
 
-        {/* Read-only fields with tooltip */}
-        <Tooltip title="Email cannot be changed">
-          <Form.Item name="email" label="Email">
-            <Input disabled placeholder="Email" />
+        <Form.Item
+          name="phone"
+          label="Phone number"
+          rules={[
+            { required: true, message: 'Phone number is required' },
+            { validator: validatePhone }
+          ]}
+        >
+          <TextInput autoComplete="new-phone" placeholder="+1 234 567 890" />
+        </Form.Item>
+
+        {/* Password only when create */}
+        {isNew && (
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[
+              { required: true, message: 'Password is required' },
+              { min: 6, message: 'Password must be at least 6 characters' }
+            ]}
+          >
+            <Input.Password autoComplete="new-password" placeholder="Enter password" />
           </Form.Item>
-        </Tooltip>
+        )}
+
+        {/* Referral Code view only */}
+        {!isNew && referralCode && (
+          <Form.Item label="Referral Code">
+            <Input value={referralCode} disabled />
+          </Form.Item>
+        )}
+
+        {!isNew && (
+          <Form.Item name="status" label="Status">
+            <Input disabled />
+          </Form.Item>
+        )}
+
+        <Form.Item name="ambassador" label="Ambassador" valuePropName="checked">
+          <Switch disabled={isNew} />
+        </Form.Item>
 
         <Tooltip title="Apple ID cannot be changed">
           <Form.Item name="appleId" label="Apple ID">
@@ -190,6 +231,7 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
             <Input disabled placeholder="Google ID" />
           </Form.Item>
         </Tooltip>
+
       </Form>
     </ModalContainer>
   )
