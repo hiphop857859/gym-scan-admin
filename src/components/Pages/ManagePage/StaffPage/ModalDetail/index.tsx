@@ -29,8 +29,9 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
   const { isFormDirty } = useDirtyForm(form)
   const { showSuccess } = useToast()
 
-  // watch referralCode
+  // watch fields
   const referralCode = Form.useWatch('referralCode', form)
+  const ambassador = Form.useWatch('ambassador', form)
 
   useEffect(() => {
     if (isNew) {
@@ -80,7 +81,8 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
         googleId: _value.googleId,
         ambassador: _value.roles?.includes(UserRole.AMBASSADOR_MEMBER),
         status: _value?.isBanned ? 'Banned' : 'Active',
-        referralCode: _value.referralCode
+        referralCode: _value.referralCode,
+        referralCount: _value.referralCount
       })
     }
   })
@@ -166,6 +168,11 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
           <Input />
         </Form.Item>
 
+        {/* register referralCount hidden */}
+        <Form.Item name="referralCount" hidden>
+          <Input />
+        </Form.Item>
+
         <Form.Item name="name" label="Name" rules={[{ validator: validateName }]} required>
           <TextInput placeholder="Name" />
         </Form.Item>
@@ -203,10 +210,17 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
           </Form.Item>
         )}
 
-        {/* Referral Code view only */}
+        {/* Referral Code */}
         {!isNew && referralCode && (
           <Form.Item label="Referral Code">
             <Input value={referralCode} disabled />
+          </Form.Item>
+        )}
+
+        {/* Referral Count only for ambassador */}
+        {!isNew && ambassador && (
+          <Form.Item label="Referral Count">
+            <Input value={form.getFieldValue('referralCount')} disabled />
           </Form.Item>
         )}
 
