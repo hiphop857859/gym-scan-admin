@@ -29,7 +29,6 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
   const { isFormDirty } = useDirtyForm(form)
   const { showSuccess } = useToast()
 
-  // watch fields
   const referralCode = Form.useWatch('referralCode', form)
   const ambassador = Form.useWatch('ambassador', form)
 
@@ -37,7 +36,8 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
     if (isNew) {
       form.resetFields()
       form.setFieldsValue({
-        ambassador: true
+        ambassador: true,
+        phone: ''
       })
     }
   }, [isNew, form])
@@ -75,7 +75,7 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
     onSuccess: (_value) => {
       form.setFieldsValue({
         name: _value.name,
-        phone: _value.phone,
+        phone: _value.phone?.replace('+33', ''),
         email: _value.email,
         appleId: _value.appleId,
         googleId: _value.googleId,
@@ -87,7 +87,7 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
     }
   })
 
-  // Validation
+  // validate name
   const validateName = (_: any, value: string) => {
     if (!value || !value.trim()) return Promise.reject('Name cannot be empty.')
     const regex = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]{1,100}$/
@@ -99,12 +99,15 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
     return Promise.resolve()
   }
 
+  // validate phone
   const validatePhone = (_: any, value: string) => {
-    if (!value) return Promise.resolve()
+    if (!value) return Promise.reject('Phone number is required')
+
     const digits = value.replace(/[^\d]/g, '')
     if (digits.length < 7 || digits.length > 15) {
       return Promise.reject('Phone number must contain 7–15 digits.')
     }
+
     return Promise.resolve()
   }
 
@@ -114,18 +117,22 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
       .then(async (values) => {
         setIsLoading(true)
 
+        const phone = `+33${values.phone}`
+
         if (isNew) {
           const payload = {
             ...values,
+            phone,
             ambassador: true
           }
           await createStaff(payload)
         } else {
           const input = {
             name: values.name,
-            phone: values.phone,
+            phone,
             ambassador: values.ambassador
           }
+
           await updateStaff({ payload: input, vars: { id: modalDetailId } })
         }
       })
@@ -144,7 +151,11 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
         array={[
           <>
             <ButtonCancel isModal={isFormDirty} onClick={handleCancel} />
-            <ButtonConfirm disabled={!isFormDirty} isLoading={loading} onClick={handleSubmit} />
+            <ButtonConfirm
+              disabled={!isFormDirty}
+              isLoading={loading}
+              onClick={handleSubmit}
+            />
           </>
         ]}
       />
@@ -163,12 +174,10 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
     >
       <Form layout="vertical" form={form} className="grid grid-cols-1 gap-1" autoComplete="off">
 
-        {/* register referralCode hidden */}
         <Form.Item name="referralCode" hidden>
           <Input />
         </Form.Item>
 
-        {/* register referralCount hidden */}
         <Form.Item name="referralCount" hidden>
           <Input />
         </Form.Item>
@@ -180,23 +189,22 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
         <Form.Item
           name="email"
           label="Email"
-          rules={isNew ? [{ required: true, message: 'Email is required' }] : []}
+          rules={[
+            { required: true, message: 'Email is required' },
+            { type: 'email', message: 'Invalid email format' }
+          ]}
         >
-          <Input disabled={!isNew} placeholder="Email" />
+          <Input disabled={!isNew} placeholder="example@email.com" />
         </Form.Item>
 
         <Form.Item
           name="phone"
           label="Phone number"
-          rules={[
-            { required: true, message: 'Phone number is required' },
-            { validator: validatePhone }
-          ]}
+          rules={[{ validator: validatePhone }]}
         >
-          <TextInput autoComplete="new-phone" placeholder="+1 234 567 890" />
+          <Input addonBefore="+33" placeholder="6 12 34 56 78" />
         </Form.Item>
 
-        {/* Password only when create */}
         {isNew && (
           <Form.Item
             name="password"
@@ -210,14 +218,12 @@ const ModalDetail = ({ handleCancel, modalDetailId, handleOk }: Props) => {
           </Form.Item>
         )}
 
-        {/* Referral Code */}
         {!isNew && referralCode && (
           <Form.Item label="Referral Code">
             <Input value={referralCode} disabled />
           </Form.Item>
         )}
 
-        {/* Referral Count only for ambassador */}
         {!isNew && ambassador && (
           <Form.Item label="Referral Count">
             <Input value={form.getFieldValue('referralCount')} disabled />
