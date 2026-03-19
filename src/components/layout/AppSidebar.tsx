@@ -81,18 +81,16 @@ const AppSidebar: React.FC = () => {
           {nav.subMenu ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${
-                openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? 'menu-item-active'
-                  : 'menu-item-inactive'
-              } cursor-pointer ${!isExpanded && !isHovered ? 'lg:justify-start' : 'lg:justify-start'}`}
+              className={`menu-item group ${openSubmenu?.type === menuType && openSubmenu?.index === index
+                ? 'menu-item-active'
+                : 'menu-item-inactive'
+                } cursor-pointer ${!isExpanded && !isHovered ? 'lg:justify-start' : 'lg:justify-start'}`}
             >
               <span
-                className={`${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? 'menu-item-icon-active'
-                    : 'menu-item-icon-inactive'
-                }`}
+                className={`${openSubmenu?.type === menuType && openSubmenu?.index === index
+                  ? 'menu-item-icon-active'
+                  : 'menu-item-icon-inactive'
+                  }`}
               >
                 {nav.Icon && (
                   <nav.Icon
@@ -107,9 +105,8 @@ const AppSidebar: React.FC = () => {
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <AngleDownIcon
-                  className={`ml-auto transition-transform duration-200 ${
-                    openSubmenu?.type === menuType && openSubmenu?.index === index ? 'rotate-180 text-brand-500' : ''
-                  }`}
+                  className={`ml-auto transition-transform duration-200 ${openSubmenu?.type === menuType && openSubmenu?.index === index ? 'rotate-180 text-brand-500' : ''
+                    }`}
                 />
               )}
             </button>
@@ -147,9 +144,8 @@ const AppSidebar: React.FC = () => {
                   <li key={subItem.code}>
                     <Link
                       to={subItem.path}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path) ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'
-                      }`}
+                      className={`menu-dropdown-item ${isActive(subItem.path) ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'
+                        }`}
                     >
                       {subItem.title}
                     </Link>
@@ -176,12 +172,12 @@ const AppSidebar: React.FC = () => {
         <Link to='/'>
           {isExpanded || isHovered || isMobileOpen ? (
             <div className='flex items-center gap-2'>
-              <img className='dark:hidden' src='/images/logo/logo.svg' alt='Logo' width={40} height={40} />
-              <img className='hidden dark:block' src='/images/logo/logo.svg' alt='Logo' width={40} height={40} />
+              <img className='dark:hidden' src='/images/logo/GymScan_transparent.png' alt='Logo' width={100} height={40} />
+              <img className='hidden dark:block' src='/images/logo/GymScan_transparent.png' alt='Logo' width={100} height={40} />
               <span className='dark:text-white text-black whitespace-nowrap  '>Admin</span>
             </div>
           ) : (
-            <img src='/images/logo/logo.svg' alt='Logo' width={40} height={40} />
+            <img src='/images/logo/GymScan_transparent.png' alt='Logo' width={100} height={40} />
           )}
         </Link>
       </div>
@@ -190,9 +186,8 @@ const AppSidebar: React.FC = () => {
           <div className='flex flex-col gap-4'>
             <div>
               <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${'justify-start'} ${
-                  isExpanded || isHovered || (isMobileOpen && 'hidden')
-                } `}
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${'justify-start'} ${isExpanded || isHovered || (isMobileOpen && 'hidden')
+                  } `}
               >
                 {'Dashboard'}
               </h2>

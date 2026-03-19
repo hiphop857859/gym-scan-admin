@@ -155,7 +155,7 @@ export default function VerifyOTP() {
         <div className='relative items-center justify-center flex-1 hidden p-8 z-1 bg-brand-950 dark:bg-white/5 lg:flex'>
           <GridShape />
           <div className='flex flex-col items-center max-w-xs'>
-            <img width={100} src='./images/logo/logo.svg' alt='Logo' />
+            <img width={100} src='./images/logo/GymScan_transparent.png' alt='Logo' />
           </div>
         </div>
       </div>

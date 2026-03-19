@@ -114,7 +114,7 @@ export default function SignUp() {
           {/* <!-- ===== Common Grid Shape End ===== --> */}
           <div className='flex flex-col items-center max-w-xs'>
             <Link to='/' className='block mb-4'>
-              <img width={100} src='./images/logo/logo.svg' alt='Logo' />
+              <img width={100} src='./images/logo/GymScan_transparent.png' alt='Logo' />
             </Link>
             <p className='text-center text-gray-400 dark:text-white/60'>
               Sign up to ADMIN and get access to all the features!
