@@ -20,6 +20,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "immer": "^10.1.1",
+    "libphonenumber-js": "^1.12.41",
     "lodash": "^4.17.21",
     "moment-timezone": "^0.5.47",
     "rc-picker": "^4.11.3",
